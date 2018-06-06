@@ -1,21 +1,45 @@
-# mypainter
+# SVG画图板
 
-> A Vue.js project
+> 年轻时吃过的苦，都会成为你未来的路。
 
-## Build Setup
+## 引言
 
-``` bash
-# install dependencies
+使用 vue 开发的工具类网站SVG画图板。
+
+## 开始
+
+##### 安装依赖
+
+可以使用以下命令安装依赖：
+
+```
 npm install
-
-# serve with hot reload at localhost:8080
-npm run dev
-
-# build for production with minification
-npm run build
-
-# build for production and view the bundle analyzer report
-npm run build --report
 ```
 
-For a detailed explanation on how things work, check out the [guide](http://vuejs-templates.github.io/webpack/) and [docs for vue-loader](http://vuejs.github.io/vue-loader).
+##### 开发
+
+运行
+
+```
+npm start
+```
+
+启动 webpack 服务，以调试项目。
+
+##### 生产
+
+如果要发布生产版本，运行
+
+```
+npm run build
+```
+
+以编译和压缩源代码。
+
+之后运行
+
+```
+node app.js
+```
+
+启动一个 [koa](https://github.com/koajs/koa) 搭建的服务端。
