@@ -1,21 +1,39 @@
 import Vue from 'vue'
 import Router from 'vue-router'
-import Painter01 from '@/components/Painter01'
-import Painter02 from '@/components/Painter02'
+import DrawBoard from '@/components/DrawBoard'
+import BaseShape from '@/components/BaseShape'
+import Beizer from '@/components/Beizer'
+import PreserveAspect from '@/components/PreserveAspect'
+import SlientNight from '@/components/SlientNight'
 
 Vue.use(Router)
 
 export default new Router({
   routes: [
     {
-      path: '/01',
-      name: 'Painter01',
-      component: Painter01
+      path: '/',
+      name: 'DrawBoard',
+      component: DrawBoard
     },
     {
-      path: '/',
-      name: 'Painter02',
-      component: Painter02
+      path: '/base',
+      name: 'BaseShape',
+      component: BaseShape
+    },
+    {
+      path: '/beizer',
+      name: 'Beizer',
+      component: Beizer
+    },
+    {
+      path: '/aspect',
+      name: 'PreserveAspect',
+      component: PreserveAspect
+    },
+    {
+      path: '/night',
+      name: 'SlientNight',
+      component: SlientNight
     }
   ]
 })

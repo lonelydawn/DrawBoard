@@ -21,9 +21,9 @@
       xlmns="http://www.w3.org/2000/svg"
       width="400px"
       height="400px"
-      viewBox="-400 -300 600 800"
+      viewBox="0 0 600 800"
       :preserveAspectRatio="preserveAspectRatio">
-      <circle rx="0" ry="0" r="300"></circle>
+      <circle cx="0" cy="0" r="300"></circle>
     </svg>
   </div>
 </template>
