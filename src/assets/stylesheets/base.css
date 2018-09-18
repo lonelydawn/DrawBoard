@@ -1,0 +1,42 @@
+* {
+  margin: 0;
+  padding: 0;
+}
+html, body {
+  height: 100%;
+}
+body {
+  font-size: 14px;
+  line-height: 1.4286;
+  font-family: Microsoft Ya Hei, Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+.cursor-pointer {
+  cursor: pointer;
+}
+.cursor-forbid {
+  cursor: not-allowed;
+}
+.one-line {
+  word-break: break-all;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+.expand-area {
+  padding: 3px;
+}
+/* 设置 webkit 滚动条样式*/
+::-webkit-scrollbar {
+  width: 3px;
+  height: 3px;
+}
+::-webkit-scrollbar-track {
+  border-radius: 5px;
+  background-color: #F5F5F5;
+}
+::-webkit-scrollbar-thumb {
+  border-radius: 5px;
+  background-color: rgba(119, 119, 119, 0.7);
+}
