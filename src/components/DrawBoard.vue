@@ -1235,7 +1235,7 @@
                     <defs>
                       <linearGradient
                         v-if="gradient.type === 'linear'"
-                        :id="gradient.name"
+                        :id="'shadow' + gradient.id"
                         :x1="gradient.x1 + '%'"
                         :y1="gradient.y1 + '%'"
                         :x2="gradient.x2 + '%'"
@@ -1249,7 +1249,7 @@
                       </linearGradient>
                       <radialGradient
                         v-else-if="gradient.type === 'radial'"
-                        :id="gradient.name"
+                        :id="'shadow' + gradient.id"
                         :cx="gradient.cx + '%'"
                         :cy="gradient.cy + '%'"
                         :r="gradient.r + '%'"
@@ -1268,7 +1268,7 @@
                       y="0"
                       :width="boardWidthValue"
                       :height="boardHeightValue"
-                      :fill="'url(#' + gradient.name + ')'"></rect>
+                      :fill="'url(#shadow' + gradient.id + ')'"></rect>
                   </svg>
                   <span class="shape-name one-line">{{ gradient.name }}</span>
                   <span
