@@ -24,8 +24,10 @@ body {
   text-overflow: ellipsis;
   overflow: hidden;
 }
-.expand-area {
+.icon-expand {
   padding: 3px;
+  cursor: pointer;
+  transition: transform 160ms linear;
 }
 /* 设置 webkit 滚动条样式*/
 ::-webkit-scrollbar {

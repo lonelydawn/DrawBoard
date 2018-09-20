@@ -7,12 +7,10 @@
       <!-- 用于添加图形、渐变和变换的菜单区域 -->
       <div class="toolbox">
         <!-- 图形菜单 -->
-        <h3 class="toolbox-title">
+        <h3 class="toolbox-title" @click="toggleToolboxExpand('shape')">
           <span
             :class="{'icon-rotate': toolboxExpand['shape']}"
-            class="fa fa-caret-up icon-expand"
-            @click="toggleToolboxExpand('shape')"></span>
-          &nbsp;图形
+            class="fa fa-caret-up icon-expand"></span>&nbsp;图形
         </h3>
         <div class="toolbox-banner" v-show="toolboxExpand['shape']">
           <img
@@ -49,43 +47,50 @@
           class="cursor-pointer"
           src="../assets/images/shape07.png"
           title="路径"
-          @click="createShape('path')">
+          @click="createShape('path')"><!--
+          --><img
+          class="cursor-pointer"
+          src="../assets/images/shape08.png"
+          title="文本"
+          @click="createShape('text')">
         </div>
         <!-- 渐变菜单 -->
-        <h3 class="toolbox-title">
+        <h3 class="toolbox-title" @click="toggleToolboxExpand('gradient')">
           <span
             :class="{'icon-rotate': toolboxExpand['gradient']}"
             class="fa fa-caret-up icon-expand"
-            @click="toggleToolboxExpand('gradient')"></span>
-          &nbsp;渐变
+            @click="toggleToolboxExpand('gradient')"></span>&nbsp;渐变
         </h3>
         <div class="toolbox-banner" v-show="toolboxExpand['gradient']">
           <img
             class="cursor-pointer"
             src="../assets/images/gradient01.png"
-            title="线性渐变"><!--
+            title="线性渐变"
+            @click="createGradient('linear')"><!--
             --><img
           class="cursor-pointer"
           src="../assets/images/gradient02.png"
-          title="径向渐变">
+          title="径向渐变"
+          @click="createGradient('radial')">
         </div>
         <!-- 变换菜单 -->
-        <h3 class="toolbox-title">
+        <h3 class="toolbox-title" @click="toggleToolboxExpand('transform')">
           <span
             :class="{'icon-rotate': toolboxExpand['transform']}"
             class="fa fa-caret-up icon-expand"
-            @click="toggleToolboxExpand('transform')"></span>
-          &nbsp;变换
+            @click="toggleToolboxExpand('transform')"></span>&nbsp;变换
         </h3>
         <div class="toolbox-banner" v-show="toolboxExpand['transform']">
           <img
-            class="cursor-pointer"
+            class="cursor-forbid"
             src="../assets/images/transform01.png"
-            title="图形蒙版"><!--
+            title="图形蒙版"
+            @click="createTransform('mask')"><!--
             --><img
-          class="cursor-pointer"
+          class="cursor-forbid"
           src="../assets/images/transform02.png"
-          title="剪贴路径">
+          title="剪贴路径"
+          @click="createTransform('clipPath')">
         </div>
       </div>
       <!-- 画板区域 -->
@@ -97,9 +102,42 @@
           :height="boardHeight"
           :viewBox="viewBox"
           :style="{ backgroundColor: boardBgColor }">
+          <defs
+            v-for="gradient in gradientList"
+            :key="'g' + gradient.id">
+            <linearGradient
+              v-if="gradient.type === 'linear'"
+              :id="gradient.name"
+              :x1="gradient.x1 + '%'"
+              :y1="gradient.y1 + '%'"
+              :x2="gradient.x2 + '%'"
+              :y2="gradient.y2 + '%'">
+              <stop
+                v-for="(stop, index) in gradient.stops"
+                :key="index"
+                :offset="stop.offset + '%'"
+                :stop-color="stop.color"
+                :stop-opacity="stop.opacity"></stop>
+            </linearGradient>
+            <radialGradient
+              v-else-if="gradient.type === 'radial'"
+              :id="gradient.name"
+              :cx="gradient.cx + '%'"
+              :cy="gradient.cy + '%'"
+              :r="gradient.r + '%'"
+              :fx="gradient.fx + '%'"
+              :fy="gradient.fy + '%'">
+              <stop
+                v-for="(stop, index) in gradient.stops"
+                :key="index"
+                :offset="stop.offset + '%'"
+                :stop-color="stop.color"
+                :stop-opacity="stop.opacity"></stop>
+            </radialGradient>
+          </defs>
           <g
-            v-for="(shape, index) in shapeList"
-            :key="index">
+            v-for="shape in shapeList"
+            :key="'s' + shape.id">
             <rect
               v-show="shape.isHidden < 0"
               class="actor"
@@ -173,6 +211,19 @@
               :stroke="shape.stroke"
               :stroke-width="shape.strokeWidth"
               @click="handleShapeClick(shape)"></path>
+            <text
+              v-show="shape.isHidden < 0"
+              class="actor"
+              v-else-if="shape.type === 'text'"
+              :x="shape.x"
+              :y="shape.y"
+              :font-size="shape.fontSize"
+              :fill="shape.fill"
+              :stroke="shape.stroke"
+              :stroke-width="shape.strokeWidth"
+              @click="handleShapeClick(shape)">
+              {{ shape.text }}
+            </text>
           </g>
         </svg>
       </div>
@@ -238,10 +289,10 @@
           <div v-else-if="activeBar === 'shape'">
             <div v-if="isShapeList">
               <h4 class="setting-title">图形列表</h4>
-              <ul class="shape-list">
+              <ul class="shape-list" v-if="shapeList.length">
                 <li
-                  v-for="(shape, index) in shapeList"
-                  :key="index"
+                  v-for="shape in shapeList"
+                  :key="shape.id"
                   :title="shape.name"
                   class="shape-list-item"
                   @click="toggleShapeItem(shape)">
@@ -252,6 +303,7 @@
                     height="40px"
                     :viewBox="viewBox">
                     <rect
+                      v-show="shape.isHidden < 0"
                       v-if="shape.type === 'rect'"
                       :x="shape.x"
                       :y="shape.y"
@@ -261,6 +313,7 @@
                       :stroke="shape.stroke"
                       :stroke-width="shape.strokeWidth"></rect>
                     <circle
+                      v-show="shape.isHidden < 0"
                       v-else-if="shape.type === 'circle'"
                       :cx="shape.cx"
                       :cy="shape.cy"
@@ -269,6 +322,7 @@
                       :stroke="shape.stroke"
                       :stroke-width="shape.strokeWidth"></circle>
                     <ellipse
+                      v-show="shape.isHidden < 0"
                       v-else-if="shape.type === 'ellipse'"
                       :cx="shape.cx"
                       :cy="shape.cy"
@@ -278,6 +332,7 @@
                       :stroke="shape.stroke"
                       :stroke-width="shape.strokeWidth"></ellipse>
                     <line
+                      v-show="shape.isHidden < 0"
                       v-else-if="shape.type === 'line'"
                       :x1="shape.x1"
                       :y1="shape.y1"
@@ -286,30 +341,43 @@
                       :stroke="shape.stroke"
                       :stroke-width="shape.strokeWidth"></line>
                     <polyline
+                      v-show="shape.isHidden < 0"
                       v-else-if="shape.type === 'polyline'"
                       :points="shape.points"
                       :fill="shape.fill"
                       :stroke="shape.stroke"
                       :stroke-width="shape.strokeWidth"></polyline>
                     <polygon
+                      v-show="shape.isHidden < 0"
                       v-else-if="shape.type === 'polygon'"
                       :points="shape.points"
                       :fill="shape.fill"
                       :stroke="shape.stroke"
                       :stroke-width="shape.strokeWidth"></polygon>
                     <path
+                      v-show="shape.isHidden < 0"
                       v-else-if="shape.type === 'path'"
                       :d="shape.d"
                       :fill="shape.fill"
                       :stroke="shape.stroke"
                       :stroke-width="shape.strokeWidth"></path>
+                    <text
+                      v-show="shape.isHidden < 0"
+                      v-else-if="shape.type === 'text'"
+                      :x="shape.x"
+                      :y="shape.y"
+                      :font-size="shape.fontSize"
+                      :fill="shape.fill"
+                      :stroke="shape.stroke"
+                      :stroke-width="shape.strokeWidth">{{ shape.text }}</text>
                   </svg>
                   <span class="shape-name one-line">{{ shape.name }}</span>
                   <span
-                    class="fa fa-trash expand-area"
+                    class="fa fa-trash"
                     @click.stop="deleteShape(shape.id)"></span>
                 </li>
               </ul>
+              <small v-else>无</small>
             </div>
             <div v-else>
               <h4 class="setting-title">
@@ -382,12 +450,42 @@
                     v-model="shapeItem.stroke">
                 </div>
                 <div class="setting-row">
+                  <label class="setting-label">填充方式</label>
+                  <input
+                    id="pure"
+                    name="fill"
+                    type="radio"
+                    value="pure"
+                    v-model="shapeItem.fillType"
+                    @click="initialFillColor('pure')"><!--
+                  --><label for="pure">&nbsp;纯色</label>
+                  &nbsp;&nbsp;
+                  <input
+                    id="mixed"
+                    name="fill"
+                    type="radio"
+                    value="mixed"
+                    :disabled="!gradientList.length"
+                    v-model="shapeItem.fillType"
+                    @click="initialFillColor('mixed')"><!--
+                  --><label for="mixed">&nbsp;渐变色</label>
+                </div>
+                <div class="setting-row" v-if="shapeItem.fillType === 'pure'">
                   <label class="setting-label" for="fill">填充颜色</label>
                   <input
                     id="fill"
                     class="ipt-setting setting-value"
                     type="color"
                     v-model="shapeItem.fill">
+                </div>
+                <div class="setting-row" v-else-if="shapeItem.fillType === 'mixed'">
+                  <label class="setting-label" for="mixedSelect">填充颜色</label>
+                  <select id="mixedSelect" name="mixed" v-model="shapeItem.fill">
+                    <option
+                      v-for="option in gradientList"
+                      :key="option.id"
+                      :value="'url(#' + option.name + ')'">{{ option.name }}</option>
+                  </select>
                 </div>
                 <div class="setting-row">
                   <label class="setting-label">可见性</label>
@@ -463,12 +561,42 @@
                     v-model="shapeItem.stroke">
                 </div>
                 <div class="setting-row">
+                  <label class="setting-label">填充方式</label>
+                  <input
+                    id="pure02"
+                    name="fill"
+                    type="radio"
+                    value="pure"
+                    v-model="shapeItem.fillType"
+                    @click="initialFillColor('pure')"><!--
+                  --><label for="pure02">&nbsp;纯色</label>
+                  &nbsp;&nbsp;
+                  <input
+                    id="mixed02"
+                    name="fill"
+                    type="radio"
+                    value="mixed"
+                    :disabled="!gradientList.length"
+                    v-model="shapeItem.fillType"
+                    @click="initialFillColor('mixed')"><!--
+                  --><label for="mixed02">&nbsp;渐变色</label>
+                </div>
+                <div class="setting-row" v-if="shapeItem.fillType === 'pure'">
                   <label class="setting-label" for="fill02">填充颜色</label>
                   <input
                     id="fill02"
                     class="ipt-setting setting-value"
                     type="color"
                     v-model="shapeItem.fill">
+                </div>
+                <div class="setting-row" v-else-if="shapeItem.fillType === 'mixed'">
+                  <label class="setting-label" for="mixedSelect02">填充颜色</label>
+                  <select id="mixedSelect02" name="mixed" v-model="shapeItem.fill">
+                    <option
+                      v-for="option in gradientList"
+                      :key="option.id"
+                      :value="'url(#' + option.name + ')'">{{ option.name }}</option>
+                  </select>
                 </div>
                 <div class="setting-row">
                   <label class="setting-label">可见性</label>
@@ -553,12 +681,42 @@
                     v-model="shapeItem.stroke">
                 </div>
                 <div class="setting-row">
+                  <label class="setting-label">填充方式</label>
+                  <input
+                    id="pure03"
+                    name="fill"
+                    type="radio"
+                    value="pure"
+                    v-model="shapeItem.fillType"
+                    @click="initialFillColor('pure')"><!--
+                  --><label for="pure03">&nbsp;纯色</label>
+                  &nbsp;&nbsp;
+                  <input
+                    id="mixed03"
+                    name="fill"
+                    type="radio"
+                    value="mixed"
+                    :disabled="!gradientList.length"
+                    v-model="shapeItem.fillType"
+                    @click="initialFillColor('mixed')"><!--
+                  --><label for="mixed03">&nbsp;渐变色</label>
+                </div>
+                <div class="setting-row" v-if="shapeItem.fillType === 'pure'">
                   <label class="setting-label" for="fill03">填充颜色</label>
                   <input
                     id="fill03"
                     class="ipt-setting setting-value"
                     type="color"
                     v-model="shapeItem.fill">
+                </div>
+                <div class="setting-row" v-else-if="shapeItem.fillType === 'mixed'">
+                  <label class="setting-label" for="mixedSelect03">填充颜色</label>
+                  <select id="mixedSelect03" name="mixed" v-model="shapeItem.fill">
+                    <option
+                      v-for="option in gradientList"
+                      :key="option.id"
+                      :value="'url(#' + option.name + ')'">{{ option.name }}</option>
+                  </select>
                 </div>
                 <div class="setting-row">
                   <label class="setting-label">可见性</label>
@@ -697,12 +855,42 @@
                     v-model="shapeItem.stroke">
                 </div>
                 <div class="setting-row">
-                  <label class="setting-label" for="fill05">填充颜色</label>
+                  <label class="setting-label">填充方式</label>
                   <input
-                    id="fill05"
+                    id="pure04"
+                    name="fill"
+                    type="radio"
+                    value="pure"
+                    v-model="shapeItem.fillType"
+                    @click="initialFillColor('pure')"><!--
+                  --><label for="pure04">&nbsp;纯色</label>
+                  &nbsp;&nbsp;
+                  <input
+                    id="mixed04"
+                    name="fill"
+                    type="radio"
+                    value="mixed"
+                    :disabled="!gradientList.length"
+                    v-model="shapeItem.fillType"
+                    @click="initialFillColor('mixed')"><!--
+                  --><label for="mixed04">&nbsp;渐变色</label>
+                </div>
+                <div class="setting-row" v-if="shapeItem.fillType === 'pure'">
+                  <label class="setting-label" for="fill04">填充颜色</label>
+                  <input
+                    id="fill04"
                     class="ipt-setting setting-value"
                     type="color"
                     v-model="shapeItem.fill">
+                </div>
+                <div class="setting-row" v-else-if="shapeItem.fillType === 'mixed'">
+                  <label class="setting-label" for="mixedSelect04">填充颜色</label>
+                  <select id="mixedSelect04" name="mixed" v-model="shapeItem.fill">
+                    <option
+                      v-for="option in gradientList"
+                      :key="option.id"
+                      :value="'url(#' + option.name + ')'">{{ option.name }}</option>
+                  </select>
                 </div>
                 <div class="setting-row">
                   <label class="setting-label">可见性</label>
@@ -759,12 +947,42 @@
                     v-model="shapeItem.stroke">
                 </div>
                 <div class="setting-row">
-                  <label class="setting-label" for="fill06">填充颜色</label>
+                  <label class="setting-label">填充方式</label>
                   <input
-                    id="fill06"
+                    id="pure05"
+                    name="fill"
+                    type="radio"
+                    value="pure"
+                    v-model="shapeItem.fillType"
+                    @click="initialFillColor('pure')"><!--
+                  --><label for="pure05">&nbsp;纯色</label>
+                  &nbsp;&nbsp;
+                  <input
+                    id="mixed05"
+                    name="fill"
+                    type="radio"
+                    value="mixed"
+                    :disabled="!gradientList.length"
+                    v-model="shapeItem.fillType"
+                    @click="initialFillColor('mixed')"><!--
+                  --><label for="mixed05">&nbsp;渐变色</label>
+                </div>
+                <div class="setting-row" v-if="shapeItem.fillType === 'pure'">
+                  <label class="setting-label" for="fill05">填充颜色</label>
+                  <input
+                    id="fill05"
                     class="ipt-setting setting-value"
                     type="color"
                     v-model="shapeItem.fill">
+                </div>
+                <div class="setting-row" v-else-if="shapeItem.fillType === 'mixed'">
+                  <label class="setting-label" for="mixedSelect05">填充颜色</label>
+                  <select id="mixedSelect05" name="mixed" v-model="shapeItem.fill">
+                    <option
+                      v-for="option in gradientList"
+                      :key="option.id"
+                      :value="'url(#' + option.name + ')'">{{ option.name }}</option>
+                  </select>
                 </div>
                 <div class="setting-row">
                   <label class="setting-label">可见性</label>
@@ -821,12 +1039,42 @@
                     v-model="shapeItem.stroke">
                 </div>
                 <div class="setting-row">
-                  <label class="setting-label" for="fill07">填充颜色</label>
+                  <label class="setting-label">填充方式</label>
                   <input
-                    id="fill07"
+                    id="pure06"
+                    name="fill"
+                    type="radio"
+                    value="pure"
+                    v-model="shapeItem.fillType"
+                    @click="initialFillColor('pure')"><!--
+                  --><label for="pure06">&nbsp;纯色</label>
+                  &nbsp;&nbsp;
+                  <input
+                    id="mixed06"
+                    name="fill"
+                    type="radio"
+                    value="mixed"
+                    :disabled="!gradientList.length"
+                    v-model="shapeItem.fillType"
+                    @click="initialFillColor('mixed')"><!--
+                  --><label for="mixed06">&nbsp;渐变色</label>
+                </div>
+                <div class="setting-row" v-if="shapeItem.fillType === 'pure'">
+                  <label class="setting-label" for="fill06">填充颜色</label>
+                  <input
+                    id="fill06"
                     class="ipt-setting setting-value"
                     type="color"
                     v-model="shapeItem.fill">
+                </div>
+                <div class="setting-row" v-else-if="shapeItem.fillType === 'mixed'">
+                  <label class="setting-label" for="mixedSelect06">填充颜色</label>
+                  <select id="mixedSelect06" name="mixed" v-model="shapeItem.fill">
+                    <option
+                      v-for="option in gradientList"
+                      :key="option.id"
+                      :value="'url(#' + option.name + ')'">{{ option.name }}</option>
+                  </select>
                 </div>
                 <div class="setting-row">
                   <label class="setting-label">可见性</label>
@@ -847,20 +1095,395 @@
                   --><label for="hide07">&nbsp;隐藏</label>
                 </div>
               </div>
+              <!-- 文本面板 -->
+              <div v-else-if="shapeItem.type === 'text'">
+                <div class="setting-row">
+                  <label class="setting-label" for="name08">名称</label>
+                  <input
+                    id="name08"
+                    class="ipt-setting setting-value"
+                    type="text"
+                    v-model="shapeItem.name">
+                </div>
+                <div class="setting-row">
+                  <label class="setting-label" for="x3">坐标X</label>
+                  <input
+                    id="x3"
+                    class="ipt-setting setting-value"
+                    type="text"
+                    v-model="shapeItem.x">
+                </div>
+                <div class="setting-row">
+                  <label class="setting-label" for="y3">坐标Y</label>
+                  <input
+                    id="y3"
+                    class="ipt-setting setting-value"
+                    min="0"
+                    type="number"
+                    v-model="shapeItem.y">
+                </div>
+                <div class="setting-row">
+                  <label class="setting-label" for="text">文本</label>
+                  <input
+                    id="text"
+                    class="ipt-setting setting-value"
+                    type="text"
+                    v-model="shapeItem.text">
+                </div>
+                <div class="setting-row">
+                  <label class="setting-label" for="fontSize">字体大小</label>
+                  <input
+                    id="fontSize"
+                    class="ipt-setting setting-value"
+                    min="0"
+                    type="number"
+                    v-model="shapeItem.fontSize">
+                </div>
+                <div class="setting-row">
+                  <label class="setting-label" for="strokeWidth08">描边宽度</label>
+                  <input
+                    id="strokeWidth08"
+                    class="ipt-setting setting-value"
+                    min="0"
+                    type="number"
+                    v-model="shapeItem.strokeWidth">
+                </div>
+                <div class="setting-row">
+                  <label class="setting-label" for="stroke08">描边颜色</label>
+                  <input
+                    id="stroke08"
+                    class="ipt-setting setting-value"
+                    type="color"
+                    v-model="shapeItem.stroke">
+                </div>
+                <div class="setting-row">
+                  <label class="setting-label">填充方式</label>
+                  <input
+                    id="pure07"
+                    name="fill"
+                    type="radio"
+                    value="pure"
+                    v-model="shapeItem.fillType"
+                    @click="initialFillColor('pure')"><!--
+                  --><label for="pure07">&nbsp;纯色</label>
+                  &nbsp;&nbsp;
+                  <input
+                    id="mixed07"
+                    name="fill"
+                    type="radio"
+                    value="mixed"
+                    :disabled="!gradientList.length"
+                    v-model="shapeItem.fillType"
+                    @click="initialFillColor('mixed')"><!--
+                  --><label for="mixed07">&nbsp;渐变色</label>
+                </div>
+                <div class="setting-row" v-if="shapeItem.fillType === 'pure'">
+                  <label class="setting-label" for="fill07">填充颜色</label>
+                  <input
+                    id="fill07"
+                    class="ipt-setting setting-value"
+                    type="color"
+                    v-model="shapeItem.fill">
+                </div>
+                <div class="setting-row" v-else-if="shapeItem.fillType === 'mixed'">
+                  <label class="setting-label" for="mixedSelect07">填充颜色</label>
+                  <select id="mixedSelect07" name="mixed" v-model="shapeItem.fill">
+                    <option
+                      v-for="option in gradientList"
+                      :key="option.id"
+                      :value="'url(#' + option.name + ')'">{{ option.name }}</option>
+                  </select>
+                </div>
+                <div class="setting-row">
+                  <label class="setting-label">可见性</label>
+                  <input
+                    id="show08"
+                    name="radio"
+                    type="radio"
+                    value="-1"
+                    v-model="shapeItem.isHidden"><!--
+                  --><label for="show08">&nbsp;显示</label>
+                  &nbsp;&nbsp;
+                  <input
+                    id="hide08"
+                    name="radio"
+                    type="radio"
+                    value="1"
+                    v-model="shapeItem.isHidden"><!--
+                  --><label for="hide08">&nbsp;隐藏</label>
+                </div>
+              </div>
             </div>
           </div>
           <!-- 渐变设置 -->
           <div v-else-if="activeBar === 'gradient'">
-            <h4 class="setting-title">渐变列表</h4>
-            <ul class="shape-list">
-              <li></li>
-            </ul>
+            <div v-if="isGradientList">
+              <h4 class="setting-title">渐变列表</h4>
+              <ul class="shape-list" v-if="gradientList.length">
+                <li
+                  v-for="(gradient, index) in gradientList"
+                  :key="gradient.id"
+                  :title="gradient.name"
+                  class="shape-list-item"
+                  @click="toggleGradientItem(gradient)">
+                  <svg
+                    class="shape-shadow"
+                    xlmns="http://www.w3.org/2000/svg"
+                    width="60px"
+                    height="40px"
+                    :viewBox="viewBox">
+                    <defs>
+                      <linearGradient
+                        v-if="gradient.type === 'linear'"
+                        :id="gradient.name"
+                        :x1="gradient.x1 + '%'"
+                        :y1="gradient.y1 + '%'"
+                        :x2="gradient.x2 + '%'"
+                        :y2="gradient.y2 + '%'">
+                        <stop
+                          v-for="(stop, index) in gradient.stops"
+                          :key="index"
+                          :offset="stop.offset + '%'"
+                          :stop-color="stop.color"
+                          :stop-opacity="stop.opacity"></stop>
+                      </linearGradient>
+                      <radialGradient
+                        v-else-if="gradient.type === 'radial'"
+                        :id="gradient.name"
+                        :cx="gradient.cx + '%'"
+                        :cy="gradient.cy + '%'"
+                        :r="gradient.r + '%'"
+                        :fx="gradient.fx + '%'"
+                        :fy="gradient.fy + '%'">
+                        <stop
+                          v-for="(stop, index) in gradient.stops"
+                          :key="index"
+                          :offset="stop.offset + '%'"
+                          :stop-color="stop.color"
+                          :stop-opacity="stop.opacity"></stop>
+                      </radialGradient>
+                    </defs>
+                    <rect
+                      x="0"
+                      y="0"
+                      :width="boardWidthValue"
+                      :height="boardHeightValue"
+                      :fill="'url(#' + gradient.name + ')'"></rect>
+                  </svg>
+                  <span class="shape-name one-line">{{ gradient.name }}</span>
+                  <span
+                    v-if="index > 1"
+                    class="fa fa-trash"
+                    @click.stop="deleteGradient(gradient.id)"></span>
+                </li>
+              </ul>
+              <small v-else>无</small>
+            </div>
+            <div v-else>
+              <h4 class="setting-title">
+                参数设置
+                <span
+                  class="fa fa-close setting-closer"
+                  @click="backTo('gradientList')"></span>
+              </h4>
+              <!-- 线性渐变 -->
+              <div v-if="gradientItem.type === 'linear'">
+                <div class="setting-row">
+                  <label class="setting-label" for="name001">名称</label>
+                  <input
+                    id="name001"
+                    class="ipt-setting setting-value-md"
+                    type="text"
+                    v-model="gradientItem.name">
+                </div>
+                <div class="setting-row">
+                  <label class="setting-label" for="startX">起点坐标X</label>
+                  <input
+                    id="startX"
+                    class="ipt-setting setting-value-sm"
+                    min="0"
+                    max="100"
+                    type="number"
+                    v-model="gradientItem.x1">%
+                </div>
+                <div class="setting-row">
+                  <label class="setting-label" for="startY">起点坐标Y</label>
+                  <input
+                    id="startY"
+                    class="ipt-setting setting-value-sm"
+                    min="0"
+                    max="100"
+                    type="number"
+                    v-model="gradientItem.y1">%
+                </div>
+                <div class="setting-row">
+                  <label class="setting-label" for="endX">终点坐标X</label>
+                  <input
+                    id="endX"
+                    class="ipt-setting setting-value-sm"
+                    min="0"
+                    max="100"
+                    type="number"
+                    v-model="gradientItem.x2">%
+                </div>
+                <div class="setting-row">
+                  <label class="setting-label" for="endY">终点坐标Y</label>
+                  <input
+                    id="endY"
+                    class="ipt-setting setting-value-sm"
+                    min="0"
+                    max="100"
+                    type="number"
+                    v-model="gradientItem.y2">%
+                </div>
+                <div class="setting-row">
+                  <span class="btn btn-info" @click="addGradientStop">添加色站</span>
+                </div>
+                <div
+                  v-for="(stop, index) in gradientItem.stops"
+                  :key="index"
+                  class="setting-row">
+                  <h4>
+                    <span
+                      :class="{'icon-rotate': stop.editable > 0}"
+                      class="fa fa-caret-up icon-expand"
+                      @click="toggleStopEditable(stop)"></span>
+                    色站{{ index + 1 }}
+                  </h4>
+                  <div v-show="stop.editable > 0">
+                    <label :for="'offset' + index">偏移</label>
+                    <input
+                      :id="'offset' + index"
+                      class="ipt-setting setting-value-sm"
+                      min="0"
+                      max="100"
+                      type="number"
+                      v-model="stop.offset">%&nbsp;&nbsp;&nbsp;
+                    <label :for="'opacity' + index">透明度</label>
+                    <input
+                      :id="'opacity' + index"
+                      class="ipt-setting setting-value-sm"
+                      min="0"
+                      max="1"
+                      type="number"
+                      v-model="stop.opacity"><br>
+                    <label :for="'color' + index">颜色</label>
+                    <input
+                      :id="'color' + index"
+                      class="ipt-setting setting-value-sm"
+                      type="color"
+                      v-model="stop.color">
+                  </div>
+                </div>
+              </div>
+              <!-- 径向渐变 -->
+              <div v-else-if="gradientItem.type === 'radial'">
+                <div class="setting-row">
+                  <label class="setting-label" for="name002">名称</label>
+                  <input
+                    id="name002"
+                    class="ipt-setting setting-value-md"
+                    type="text"
+                    v-model="gradientItem.name">
+                </div>
+                <div class="setting-row">
+                  <label class="setting-label" for="centerX">中心坐标X</label>
+                  <input
+                    id="centerX"
+                    class="ipt-setting setting-value-sm"
+                    min="0"
+                    max="100"
+                    type="number"
+                    v-model="gradientItem.cx">%
+                </div>
+                <div class="setting-row">
+                  <label class="setting-label" for="centerY">中心坐标Y</label>
+                  <input
+                    id="centerY"
+                    class="ipt-setting setting-value-sm"
+                    min="0"
+                    max="100"
+                    type="number"
+                    v-model="gradientItem.cy">%
+                </div>
+                <div class="setting-row">
+                  <label class="setting-label" for="gradientR">渐变变径</label>
+                  <input
+                    id="gradientR"
+                    class="ipt-setting setting-value-sm"
+                    min="0"
+                    max="100"
+                    type="number"
+                    v-model="gradientItem.r">%
+                </div>
+                <div class="setting-row">
+                  <label class="setting-label" for="focusX">焦点坐标X</label>
+                  <input
+                    id="focusX"
+                    class="ipt-setting setting-value-sm"
+                    min="0"
+                    max="100"
+                    type="number"
+                    v-model="gradientItem.fx">%
+                </div>
+                <div class="setting-row">
+                  <label class="setting-label" for="focusY">焦点坐标Y</label>
+                  <input
+                    id="focusY"
+                    class="ipt-setting setting-value-sm"
+                    min="0"
+                    max="100"
+                    type="number"
+                    v-model="gradientItem.fy">%
+                </div>
+                <div class="setting-row">
+                  <span class="btn btn-info" @click="addGradientStop">添加色站</span>
+                </div>
+                <div
+                  v-for="(stop, index) in gradientItem.stops"
+                  :key="index"
+                  class="setting-row">
+                  <h4>
+                    <span
+                      :class="{'icon-rotate': stop.editable > 0}"
+                      class="fa fa-caret-up icon-expand"
+                      @click="toggleStopEditable(stop)"></span>
+                    色站{{ index + 1 }}
+                  </h4>
+                  <div v-show="stop.editable > 0">
+                    <label :for="'offset' + index">偏移</label>
+                    <input
+                      :id="'offset' + index"
+                      class="ipt-setting setting-value-sm"
+                      min="0"
+                      max="100"
+                      type="number"
+                      v-model="stop.offset">%&nbsp;&nbsp;&nbsp;
+                    <label :for="'opacity' + index">透明度</label>
+                    <input
+                      :id="'opacity' + index"
+                      class="ipt-setting setting-value-sm"
+                      min="0"
+                      max="1"
+                      type="number"
+                      v-model="stop.opacity"><br>
+                    <label :for="'color' + index">颜色</label>
+                    <input
+                      :id="'color' + index"
+                      class="ipt-setting setting-value-sm"
+                      type="color"
+                      v-model="stop.color">
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
           <!-- 变换设置 -->
           <div v-else-if="activeBar === 'transform'">
             <h4 class="setting-title">变换列表</h4>
-            <ul class="shape-list">
+            <ul class="shape-list" v-if="transformList.length">
             </ul>
+            <small v-else>无</small>
           </div>
         </div>
       </div>
@@ -882,9 +1505,74 @@
         boardWidthValue: 720,
         boardHeightValue: 480,
         boardBgColor: '#ffffff',
-        shapeList: [],
+        shapeList: [
+          {
+            id: 0,
+            name: '00-default',
+            type: 'rect',
+            x: 50,
+            y: 35,
+            width: 140,
+            height: 90,
+            fillType: 'pure',
+            fill: '#ffffff',
+            stroke: '#4e9bd4',
+            strokeWidth: 3,
+            isHidden: -1
+          }
+        ],
         shapeItem: {},
+        gradientList: [
+          {
+            id: 0,
+            name: '00-default',
+            type: 'linear',
+            x1: 0,
+            y1: 0,
+            x2: 100,
+            y2: 0,
+            stops: [
+              {
+                offset: 0,
+                color: '#000000',
+                opacity: 1,
+                editable: 1
+              },
+              {
+                offset: 100,
+                color: '#ffffff',
+                opacity: 1,
+                editable: 1
+              }
+            ]
+          },
+          {
+            id: 1,
+            name: '01-default',
+            type: 'radial',
+            cx: 50,
+            cy: 50,
+            r: 50,
+            fx: 50,
+            fy: 50,
+            stops: [
+              {
+                offset: 0,
+                color: '#000000',
+                opacity: 1,
+                editable: 1
+              },
+              {
+                offset: 100,
+                color: '#ffffff',
+                opacity: 1,
+                editable: 1
+              }
+            ]
+          }
+        ],
         gradientItem: {},
+        transformList: [],
         transformItem: {},
         isShapeList: true,
         isGradientList: true,
@@ -912,7 +1600,13 @@
       toggleToolboxExpand (key) {
         this.toolboxExpand[key] = !this.toolboxExpand[key]
       },
+      toggleStopEditable (stop) {
+        stop.editable = -stop.editable
+      },
       toggleActiveBar (key) {
+        this.isShapeList = true
+        this.isGradientList = true
+        this.isTransformList = true
         this.activeBar = this.activeBar !== key ? key : 'none'
       },
       toggleShapeItem (shape) {
@@ -927,16 +1621,25 @@
         this.isTransformList = false
         this.transformItem = transform
       },
+      initialFillColor (type) {
+        let isPure = this.shapeItem.fill.indexOf('#') === 0
+        if (type === 'mixed' && isPure) {
+          this.shapeItem.fill = 'url(#' + this.gradientList[0].name + ')'
+        }
+        if (type === 'pure' && !isPure) {
+          this.shapeItem.fill = '#ffffff'
+        }
+      },
       backTo (key) {
         switch (key) {
           case 'shapeList':
             this.isShapeList = true
             break
-          case 'transformList':
-            this.isTransformList = true
-            break
           case 'gradientList':
             this.isGradientList = true
+            break
+          case 'transformList':
+            this.isTransformList = true
             break
         }
       },
@@ -944,16 +1647,25 @@
         let map = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 'a', 'b', 'c', 'd', 'e', 'f']
         return '' + map[Math.floor(num / 16)] + map[num % 16]
       },
+      addGradientStop () {
+        this.gradientItem.stops.push({
+          offset: 100,
+          color: '#000000',
+          opacity: 1,
+          editable: true
+        })
+      },
       createShape (type) {
         let id = this.shapeList.length
           ? Math.max(...(this.shapeList.map(shape => shape.id))) + 1
           : 0
         let prototype = {
           id,
-          name: type + '-' + this.toHex(id),
+          name: this.toHex(id) + '-' + type,
           type,
           isHidden: -1,
           stroke: '#4e9bd4',
+          fillType: 'pure',
           fill: '#ffffff',
           strokeWidth: 3
         }
@@ -964,7 +1676,8 @@
           line: { x1: 40, y1: 190, x2: 200, y2: 290 },
           polyline: { points: '360,180 300,240 430,240 360,300' },
           polygon: { points: '600,180 540,240 605,240 600,300 670,240' },
-          path: { d: 'M40,350L200,450' }
+          path: { d: 'M60,370C160,370,60,430,180,430' },
+          text: { x: 300, y: 420, fontSize: 72, text: '文本' }
         }[type]
         let shape = Object.assign(prototype, partial)
         this.shapeList.push(shape)
@@ -972,9 +1685,64 @@
         this.activeBar = 'shape'
         this.isShapeList = false
       },
+      createGradient (type) {
+        let id = this.gradientList.length
+          ? Math.max(...(this.gradientList.map(gradient => gradient.id))) + 1
+          : 0
+        let prototype = {
+          id,
+          name: this.toHex(id) + '-' + type,
+          type,
+          stops: [
+            {
+              offset: 0,
+              color: '#000000',
+              opacity: 1,
+              editable: 1
+            },
+            {
+              offset: 100,
+              color: '#ffffff',
+              opacity: 1,
+              editable: 1
+            }
+          ]
+        }
+        let partial = {
+          linear: {
+            x1: 0,
+            y1: 0,
+            x2: 100,
+            y2: 0
+          },
+          radial: {
+            cx: 50,
+            cy: 50,
+            r: 50,
+            fx: 50,
+            fy: 50
+          }
+        }[type]
+        let gradient = Object.assign(prototype, partial)
+        this.gradientList.push(gradient)
+        this.gradientItem = gradient
+        this.activeBar = 'gradient'
+        this.isGradientList = false
+      },
+      createTransform (type) {
+
+      },
       deleteShape (id) {
         let index = this.shapeList.findIndex(shape => shape.id === id)
         index !== -1 && this.shapeList.splice(index, 1)
+      },
+      deleteGradient (id) {
+        let index = this.gradientList.findIndex(gradient => gradient.id === id)
+        index !== -1 && this.gradientList.splice(index, 1)
+      },
+      deleteTransform (id) {
+        let index = this.transformList.findIndex(transform => transform.id === id)
+        index !== -1 && this.transformList.splice(index, 1)
       },
       handleShapeClick (shape) {
         this.shapeItem = shape
@@ -1018,13 +1786,10 @@
     color: #515a6e;
     border-top: 1px solid #eee;
     border-bottom: 1px solid #eee;
+    cursor: pointer;
   }
   .toolbox-title:first-child {
     border-top: none;
-  }
-  .icon-expand {
-    cursor: pointer;
-    transition: transform 160ms linear;
   }
   .icon-rotate {
     transform: rotateZ(180deg);
@@ -1093,6 +1858,7 @@
     max-height: calc(100% - 24px);
     overflow-y: auto;
     margin-top: 12px;
+    color: #515a6e;
     background-color: #fff;
     border-top: 1px solid #eee;
     box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.33);
@@ -1100,7 +1866,6 @@
   .setting-title {
      font-size: 15px;
      margin-bottom: 10px;
-    color: #515a6e;
    }
   .setting-closer {
     cursor: pointer;
@@ -1115,15 +1880,23 @@
     display: inline-block;
     vertical-align: middle;
     width: 72px;
-    color: #000;
   }
   .setting-value {
     width: 120px;
   }
+  .setting-value-sm {
+    width: 40px;
+  }
+  .setting-value-md {
+    width: 100px;
+  }
   .ipt-setting {
     outline: none;
+    height: 17px;
+    padding-left: 3px;
+    padding-right: 3px;
     vertical-align: middle;
-    border: 1px solid transparent;
+    border: 1px solid #e5e5e5;
     background-color: #fff;
     transition: border-color 160ms linear;
   }
@@ -1134,6 +1907,20 @@
   input[type=radio],
   input[type=radio] + label {
     vertical-align: middle;
+  }
+  .btn {
+    padding: 1px 6px;
+    border-radius: 3px;
+    border: 1px solid transparent;
+    transition: all 240ms linear;
+  }
+  .btn-info {
+    color: #409eff;
+    border-color: #409eff;
+  }
+  .btn-info:hover {
+    color: #fff;
+    background-color: #409eff;
   }
   .shape-list {
     list-style: none;
@@ -1151,7 +1938,7 @@
     margin-right: 10px;
   }
   .shape-name {
-    width: 100px;
+    width: 90px;
     display: inline-block;
     vertical-align: middle;
   }
